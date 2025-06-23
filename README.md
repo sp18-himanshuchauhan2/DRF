@@ -1,1 +1,1 @@
-# Getting Started with Django Rest Framework
+# Getting Started with Django REST Framework

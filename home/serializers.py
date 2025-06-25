@@ -12,7 +12,8 @@ class ColorSerializer(serializers.ModelSerializer):
         fields = ['color_name', 'id']
 
 class PeopleSerializer(serializers.ModelSerializer):
-    color = ColorSerializer()
+    # color = ColorSerializer()
+    color = serializers.PrimaryKeyRelatedField(queryset=Color.objects.all())
     country = serializers.SerializerMethodField()
     color_info = serializers.SerializerMethodField()
 
@@ -35,7 +36,7 @@ class PeopleSerializer(serializers.ModelSerializer):
         if any (ch in special_char for ch in data['name']):
             raise serializers.ValidationError('name cannot contain special chars...')
         
-        if data['age'] < 18:
+        if data.get('age') and data['age'] < 18:
             raise serializers.ValidationError('age should be greater than 18...')
         
         return data

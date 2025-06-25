@@ -27,9 +27,12 @@ class PeopleSerializer(serializers.ModelSerializer):
         return "Inida"
     
     def get_color_info(self, obj):
-        color_obj = Color.objects.get(id=obj.color.id)
-
-        return {'color_name': color_obj.color_name, 'hex_code': '#000'}
+        if obj.color is None:
+            return None
+        return {
+            'color_name': obj.color.color_name,
+            'hex_code': '#000'
+        }
 
     def validate(self, data):
         special_char = "!@#$%^&*()-+?_=,<>/"

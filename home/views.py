@@ -3,7 +3,45 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, APIView
 from rest_framework import viewsets, status
 from home.models import Person
-from home.serializers import PeopleSerializer, LoginSerializer
+from home.serializers import PeopleSerializer, LoginSerializer, RegisterSerializer
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
+
+class RegisterAPI(APIView):
+    def post(self, request):
+        data = request.data
+        serializer = RegisterSerializer(data = data)
+
+        if not serializer.is_valid():
+            return Response({
+                'status': False,
+                'message': serializer.errors},
+                status.HTTP_400_BAD_REQUEST)
+        
+        serializer.save()
+        return Response({
+            'status': True, 'message': 'user successfully registered...'}, status.HTTP_201_CREATED)
+
+class LoginAPI(APIView):
+    def post(self, request):
+        data = request.data
+        serializer = LoginSerializer(data = data)
+
+        if not serializer.is_valid():
+            return Response({'status': False, 'message': serializer.errors}, status.HTTP_400_BAD_REQUEST)
+
+        print(serializer.data)
+        user = authenticate(username=serializer.data['username'], password=serializer.data['password'])
+
+        if not user:
+            return Response({'status': False, 'message': 'invalid credentials...'}, status.HTTP_400_BAD_REQUEST)
+
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({'status': True, "message": 'login successfully', 'token': str(token)})
+
 
 # Create your views here.
 @api_view(['GET', 'POST'])
@@ -88,7 +126,10 @@ def login(request):
     return Response(serializer.errors)
 
 class PersonAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
     def get(self, request):
+        print(request.user)
         objs = Person.objects.filter(color__isnull=False)
         serializer = PeopleSerializer(objs, many=True)
         return Response(serializer.data)

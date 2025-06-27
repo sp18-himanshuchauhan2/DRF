@@ -9,6 +9,7 @@ from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
+from django.core.paginator import Paginator
 
 class RegisterAPI(APIView):
     def post(self, request):
@@ -129,10 +130,23 @@ class PersonAPI(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [TokenAuthentication]
     def get(self, request):
-        print(request.user)
-        objs = Person.objects.filter(color__isnull=False)
-        serializer = PeopleSerializer(objs, many=True)
-        return Response(serializer.data)
+        try: 
+            print(request.user)
+            # objs = Person.objects.filter(color__isnull=False)
+        
+            #pagination..
+
+            objs = Person.objects.all()
+            page = request.GET.get('page', 1)
+            page_size = 3
+            paginator = Paginator(objs, page_size)
+            serializer = PeopleSerializer(paginator.page(page), many=True)
+            return Response(serializer.data)
+        
+        except Exception as e:
+            return Response({
+                'status': False, 'message': 'invalid page number...'
+            })
     
         # return Response({'message': 'This is a get request'})
     

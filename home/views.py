@@ -196,9 +196,12 @@ class PersonAPI(APIView):
 
         # return Response({'message': 'This is a delete request'})
 
+from .paginations import CustomPagination
+
 class PersonViewSet(viewsets.ModelViewSet):
     serializer_class = PeopleSerializer
     queryset = Person.objects.all()
+    pagination_class = CustomPagination
 
     #search method - filter...
     def list(self, request):
@@ -208,5 +211,15 @@ class PersonViewSet(viewsets.ModelViewSet):
         if search:
             queryset = queryset.filter(name__startswith=search) 
             
-        serializer = PeopleSerializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
+        # serializer = PeopleSerializer(queryset, many=True)
+        #return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
+    
+        # Apply pagination
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        # If pagination is not applied
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
